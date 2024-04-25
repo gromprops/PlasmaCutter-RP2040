@@ -6,13 +6,18 @@
 unsigned long currMillis = 0;
 
 /*
-  BUTTONS
+  INPUT
 */
 
 // Definitions
 const uint8_t trigger1Pin = 0;              // Inner trigger
 const uint8_t trigger2Pin = 1;              // Outer trigger
 const uint8_t selectorPin = 2;              // Rotation selector
+
+const uint8_t calModePin = 5;               // Switches servo position tuning mode
+const uint8_t headPotPin = A0;              // Head position tuning
+const uint8_t finExtendPotPin = A1;         // Extended fin position tuning
+const uint8_t finRetractPotPin = A2;        // Retracted fin position tuning
 
 // Setup Function
 
@@ -22,6 +27,8 @@ void initializeInputs() {
   pinMode(trigger1Pin, INPUT_PULLUP);
   pinMode(trigger2Pin, INPUT_PULLUP);
   pinMode(selectorPin, INPUT_PULLUP);
+
+  pinMode(calModePin, INPUT_PULLUP);
 }
 
 /*
