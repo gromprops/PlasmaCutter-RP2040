@@ -182,6 +182,57 @@ void rotateHead() {
   }
 }
 
+// Servo Calibration
+uint8_t headPotVal = 0;
+uint8_t finEPotVal = 0;
+uint8_t finRPotVal = 0;
+
+/*
+Mode setting:
+The MODE buttom push will cycle through the following modes:
+0: Normal operation
+1: Head position calibration
+2: Extended fin position calibration
+3: Retracted fin postion calibration
+*/
+uint8_t currMode = 0;
+
+void syncHeadPos() {
+  headPotVal = analogRead(headPotPin);
+  byte newHeadPos = floor(270 * (headPotVal/4095));
+  digitalWrite(headServoPin, newHeadPos);
+}
+
+void syncFinEPos() {
+  finEPotVal = analogRead(finExtendPotPin);
+  byte newFinEPos = floor(180 * (finEPotVal/4095));
+  digitalWrite(finServoPin, newFinEPos);
+}
+
+void syncFinRPos() {
+  finRPotVal = analogRead(finRetractPotPin);
+  byte newFinRPos = floor(180 * (finRPotVal/4095));
+  digitalWrite(finServoPin, newFinRPos);
+}
+
+void setMode() {
+  currMode = currMode + 1;
+  if (currMode > 3) currMode = 0;
+
+  switch (currMode) {
+    case 0:
+      break;
+    case 1:
+      syncHeadPos();
+      break;
+    case 2:
+      syncFinEPos();
+      break;
+    case 3:
+      syncFinRPos();
+  }
+}
+
 // Setup Function
 void initializeServos() {
   Serial.println(F("Initializing servos"));
