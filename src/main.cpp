@@ -15,9 +15,7 @@ const uint8_t trigger2Pin = 1;              // Outer trigger
 const uint8_t selectorPin = 2;              // Rotation selector
 
 const uint8_t calModePin = 5;               // Switches servo position tuning mode
-const uint8_t headPotPin = A0;              // Head position tuning
-const uint8_t finExtendPotPin = A1;         // Extended fin position tuning
-const uint8_t finRetractPotPin = A2;        // Retracted fin position tuning
+const uint8_t calPotPin = A2;               // Calibration potentiometer pin
 
 // Setup Function
 
@@ -76,9 +74,9 @@ void initializeDFPlayer() {
 // Fin Servo
 Servo finservo;                         // MG90S servo used to actuate retracting fins
 const uint8_t finServoPin = 14;
-const uint8_t finExtendedPos = 160;
+uint8_t finExtendedPos = 160;
 const uint8_t finFiringPos = finExtendedPos - 80;        // TODO Tune firing position
-const uint8_t finRetractedPos = 20;
+uint8_t finRetractedPos = 20;
 
 const uint16_t finInterval = 250;               // Approx delay @ 5V (325)
 const uint16_t finFiringInterval = 125;         // TODO Tune interval
@@ -131,8 +129,8 @@ Servo headservo;                          // DS3218MG servo used to rotate head
 const uint8_t headServoPin = 15;
 const uint16_t headServoMinPulse = 500;
 const uint16_t headServoMaxPulse = 2500;
-const uint8_t headServoMinPos = 53;
-const uint8_t headServoMaxPos = 107;
+uint8_t headServoMinPos = 53;
+uint8_t headServoMaxPos = 107;
 
 const uint16_t headInterval = 350;                // TODO Verify head delay @ working voltage (~7V)
 
@@ -183,53 +181,74 @@ void rotateHead() {
 }
 
 // Servo Calibration
-uint8_t headPotVal = 0;
-uint8_t finEPotVal = 0;
-uint8_t finRPotVal = 0;
+uint8_t newHeadHomePos = 0;
+uint8_t newHeadRotatedPos = 0;
+uint8_t newFinExtendedPos = 0;
+uint8_t newFinRetractedPos = 0;
 
 /*
 Mode setting:
 The MODE buttom push will cycle through the following modes:
 0: Normal operation
-1: Head position calibration
-2: Extended fin position calibration
-3: Retracted fin postion calibration
+1: Head home position calibration
+2: Head rotated position calibration
+3: Extended fin position calibration
+4: Retracted fin postion calibration
 */
 uint8_t currMode = 0;
 
-void syncHeadPos() {
-  headPotVal = analogRead(headPotPin);
-  byte newHeadPos = floor(270 * (headPotVal/4095));
-  digitalWrite(headServoPin, newHeadPos);
+void savePosCalibration() {
+  headServoMinPos = newHeadHomePos;
+  headServoMaxPos = newHeadRotatedPos;
+  finExtendedPos = newFinExtendedPos;
+  finRetractedPos = newFinRetractedPos;
 }
 
-void syncFinEPos() {
-  finEPotVal = analogRead(finExtendPotPin);
-  byte newFinEPos = floor(180 * (finEPotVal/4095));
-  digitalWrite(finServoPin, newFinEPos);
+void syncHeadHomePos() {
+  uint8_t headHomePotVal = analogRead(calPotPin);
+  newHeadHomePos = floor(270 * (headHomePotVal/4095));
+  digitalWrite(headServoPin, newHeadHomePos);
 }
 
-void syncFinRPos() {
-  finRPotVal = analogRead(finRetractPotPin);
-  byte newFinRPos = floor(180 * (finRPotVal/4095));
-  digitalWrite(finServoPin, newFinRPos);
+void syncHeadRotatedPos() {
+  uint8_t headRotatedPotVal = analogRead(calPotPin);
+  newHeadRotatedPos = floor(270 * (headRotatedPotVal/4095));
+  digitalWrite(headServoPin, newHeadRotatedPos);
+}
+
+void syncFinExtendedPos() {
+  uint8_t finExtendedPotVal = analogRead(calPotPin);
+  newFinExtendedPos = floor(180 * (finExtendedPotVal/4095));
+  digitalWrite(finServoPin, newFinExtendedPos);
+}
+
+void syncFinRetractedPos() {
+  uint8_t finRetractedPotVal = analogRead(calPotPin);
+  newFinRetractedPos = floor(180 * (finRetractedPotVal/4095));
+  digitalWrite(finServoPin, newFinRetractedPos);
 }
 
 void setMode() {
   currMode = currMode + 1;
-  if (currMode > 3) currMode = 0;
+  if (currMode > 4) currMode = 0;
 
+  // TODO: implement mode indicator LED
   switch (currMode) {
     case 0:
+      savePosCalibration();
       break;
     case 1:
-      syncHeadPos();
+      syncHeadHomePos();
       break;
     case 2:
-      syncFinEPos();
+      syncHeadRotatedPos();
       break;
     case 3:
-      syncFinRPos();
+      syncFinExtendedPos();
+      break;
+    case 4:
+      syncFinRetractedPos();
+      break;
   }
 }
 
