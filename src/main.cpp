@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <Servo.h>
 #include <FastLED.h>
 #include <DFPlayerMini_Fast.h>
@@ -194,14 +195,19 @@ The MODE buttom push will cycle through the following modes:
 2: Head rotated position calibration
 3: Extended fin position calibration
 4: Retracted fin postion calibration
+5: Save settings
 */
 uint8_t currMode = 0;
 
 void savePosCalibration() {
+  // TODO: Rework to save new values to EEPROM
   headServoMinPos = newHeadHomePos;
   headServoMaxPos = newHeadRotatedPos;
   finExtendedPos = newFinExtendedPos;
   finRetractedPos = newFinRetractedPos;
+
+  // Turns off calibration mode
+  currMode = 0;
 }
 
 void syncHeadHomePos() {
@@ -228,27 +234,29 @@ void syncFinRetractedPos() {
   digitalWrite(finServoPin, newFinRetractedPos);
 }
 
-void setMode() {
+void calMode() {
+  // TODO: move mode state switching
   currMode = currMode + 1;
   if (currMode > 4) currMode = 0;
-
-  // TODO: implement mode indicator LED
-  switch (currMode) {
-    case 0:
-      savePosCalibration();
-      break;
-    case 1:
-      syncHeadHomePos();
-      break;
-    case 2:
-      syncHeadRotatedPos();
-      break;
-    case 3:
-      syncFinExtendedPos();
-      break;
-    case 4:
-      syncFinRetractedPos();
-      break;
+  while (currMode != 0) {
+    // TODO: implement mode indicator LED
+    switch (currMode) {
+      case 1:
+        syncHeadHomePos();
+        break;
+      case 2:
+        syncHeadRotatedPos();
+        break;
+      case 3:
+        syncFinExtendedPos();
+        break;
+      case 4:
+        syncFinRetractedPos();
+        break;
+      case 5:
+        savePosCalibration();
+        break;
+    }
   }
 }
 
@@ -448,6 +456,7 @@ void fireTrigger() {                     // Initiates firing action, requires tr
 */
 void setup() {
   Serial.begin(115200);
+  EEPROM.begin(512);
   pinMode(LED_BUILTIN, OUTPUT);
 
   initializeInputs();
@@ -461,12 +470,7 @@ void setup() {
 void loop() {
   currMillis = millis();
 
-  if (firing) {
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  if (!firing) {
-    digitalWrite(LED_BUILTIN, LOW);
-  }
+  calMode();
 
   byte trigger1State = digitalRead(trigger1Pin);
   byte trigger2State = digitalRead(trigger2Pin);
