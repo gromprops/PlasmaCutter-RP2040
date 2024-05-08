@@ -130,8 +130,8 @@ Servo headservo;                          // DS3218MG servo used to rotate head
 const uint8_t headServoPin = 15;
 const uint16_t headServoMinPulse = 500;
 const uint16_t headServoMaxPulse = 2500;
-uint8_t headServoMinPos = 53;
-uint8_t headServoMaxPos = 107;
+const uint8_t headServoMinPos = 53;
+const uint8_t headServoMaxPos = 107;
 
 const uint16_t headInterval = 350;                // TODO Verify head delay @ working voltage (~7V)
 
@@ -187,6 +187,12 @@ uint8_t newHeadRotatedPos = 0;
 uint8_t newFinExtendedPos = 0;
 uint8_t newFinRetractedPos = 0;
 
+// Flash calibration addresses
+const u_int8_t headHomeAddr = 0;
+const u_int8_t headRotatedAddr = 1;
+const u_int8_t finsExtendedAddr = 2;
+const u_int8_t finsRetractedAddr = 3;
+
 /*
 Mode setting:
 The MODE buttom push will cycle through the following modes:
@@ -199,12 +205,25 @@ The MODE buttom push will cycle through the following modes:
 */
 uint8_t currMode = 0;
 
+// TODO: implement EEPROM read setup function
+
 void savePosCalibration() {
-  // TODO: Rework to save new values to EEPROM
-  headServoMinPos = newHeadHomePos;
-  headServoMaxPos = newHeadRotatedPos;
-  finExtendedPos = newFinExtendedPos;
-  finRetractedPos = newFinRetractedPos;
+  const uint8_t currHeadHomePos = EEPROM.read(0);
+  if (currHeadHomePos != newHeadHomePos) {
+    EEPROM.write(0, newHeadHomePos);
+  }
+  const uint8_t currHeadRotatedPos = EEPROM.read(1);
+  if (currHeadRotatedPos != newHeadRotatedPos) {
+    EEPROM.write(1, newHeadRotatedPos);
+  }
+  const uint8_t currFinExtendedPos = EEPROM.read(2);
+  if (currFinExtendedPos != newFinExtendedPos) {
+    EEPROM.write(2, newFinExtendedPos);
+  }
+  const uint8_t currFinRetractedPos = EEPROM.read(3);
+  if (currFinRetractedPos != newFinRetractedPos) {
+    EEPROM.write(3, newFinRetractedPos);
+  }
 
   // Turns off calibration mode
   currMode = 0;
